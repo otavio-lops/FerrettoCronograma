@@ -21,10 +21,13 @@ A ferramenta nativa de cronograma da plataforma possui limitações que podem di
 ## 🛡️ Segurança e Transparência
 Esta é uma extensão **passiva** e focada em privacidade.
 
+**Auditoria Rápida:** Como o projeto é aberto, você consegue **copiar o link desta página e colar em qualquer chatbot** e solicitar para ele analisar a segurança do código para você! :)
+  > **Exemplo de prompt:** Analise o repositório "https://github.com/otavio-lops/FerrettoCronograma/" de forma rígida, procure por vulnerabilidades no código-fonte e possíveis ameaças a minha segurança. No final, de um parecer se o projeto é seguro ou não.
+
+### Detalhes da Segurança
 * **Sem Acesso Indevido:** A extensão NÃO fornece acesso gratuito ao conteúdo pago. Ela apenas reorganiza os dados que o usuário já possui direito de acessar após o login.
 * **Zero Requisições (Passive Mode):** A ferramenta não faz chamadas de rede (API/Fetch) para os servidores da plataforma. Ela atua estritamente no *client-side*, lendo e formatando os dados já carregados no seu navegador.
-* **Conformidade:** Não há quebra de termos de serviço (ToS) para fins de exploração de dados, pois a extensão atua apenas como uma camada visual personalizada.
-* **Auditoria Rápida:** Como o projeto é aberto, você consegue **copiar o link desta página e colar em qualquer chatbot** e solicitar para ele analisar a segurança do código para você! :)
+* **Conformidade:** Não há quebra de termos de serviço (ToS) para fins de exploração de dados, pois a extensão atua apenas como uma camada visual personalizada.<br>
 
 ## 💡 Filosofia do Projeto
 Este projeto **não possui fins lucrativos ou financeiros**. Ele nasceu da necessidade individual de um estudante e está sendo compartilhado gratuitamente para ajudar a comunidade a ter uma preparação mais organizada e menos estressante.<br>
