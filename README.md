@@ -74,3 +74,5 @@ Sim, 100% gratuita e de código aberto.
 
 ## ⚖️ Aviso Legal
 Esta extensão é uma ferramenta de produtividade de código aberto e independente. Ela não possui vínculo, patrocínio ou autorização da plataforma Ferretto. O uso desta ferramenta é de inteira responsabilidade do usuário. O desenvolvedor não se responsabiliza por eventuais atualizações na plataforma que tornem a extensão incompatível ou por decisões administrativas da plataforma em relação ao uso de extensões de terceiros.
+
+<img src="https://komarev.com/ghpvc/?username=otavio-lops-FerretoCronograma&label=VISITANTES&color=bd93f9&style=for-the-badge"/>
