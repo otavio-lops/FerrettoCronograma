@@ -24,6 +24,7 @@ Esta é uma extensão **passiva** e focada em privacidade.
 * **Sem Acesso Indevido:** A extensão NÃO fornece acesso gratuito ao conteúdo pago. Ela apenas reorganiza os dados que o usuário já possui direito de acessar após o login.
 * **Zero Requisições (Passive Mode):** A ferramenta não faz chamadas de rede (API/Fetch) para os servidores da plataforma. Ela atua estritamente no *client-side*, lendo e formatando os dados já carregados no seu navegador.
 * **Conformidade:** Não há quebra de termos de serviço (ToS) para fins de exploração de dados, pois a extensão atua apenas como uma camada visual personalizada.
+* **Auditoria Rápida:** Como o projeto é aberto, você consegue **copiar o link desta página e colar em qualquer chatbot** e solicitar para ele analisar a segurança do código para você! :)
 
 ## 💡 Filosofia do Projeto
 Este projeto **não possui fins lucrativos ou financeiros**. Ele nasceu da necessidade individual de um estudante e está sendo compartilhado gratuitamente para ajudar a comunidade a ter uma preparação mais organizada e menos estressante.<br>
