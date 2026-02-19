@@ -14,7 +14,7 @@ A ferramenta nativa de cronograma da plataforma possui limitações que podem di
 
 ## 📸 Demonstração da Interface
 
-| Configuração Inicial | Cronograma de Estudos | Organizador de Atrasados |
+| Configuração Inicial | Cronograma de Estudos | Organizador de Atrasos |
 | :---: | :---: | :---: |
 | <img src="https://raw.githubusercontent.com/otavio-lops/CronogramaSimples/refs/heads/main/images/exemplo-1.webp" width="300"> | <img src="https://raw.githubusercontent.com/otavio-lops/CronogramaSimples/refs/heads/main/images/exemplo-2.webp" width="300"> | <img src="https://raw.githubusercontent.com/otavio-lops/CronogramaSimples/refs/heads/main/images/exemplo-3.webp" width="300">
 
