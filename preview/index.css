@@ -1,0 +1,615 @@
+    :root {
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --bg: #f1f5f9;
+      --card: #ffffff;
+      --text: #0f172a;
+      --text-light: #64748b;
+      --border: #e2e8f0;
+      --danger: #ef4444;
+      --radius: 12px;
+    }
+
+    * { 
+      box-sizing: border-box;
+      -webkit-user-select: none; /* Safari */
+      -moz-user-select: none;    /* Firefox */
+      -ms-user-select: none;     /* IE10+/Edge */
+      user-select: none;         /* Padrão (Chrome, Opera, etc.) */
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 16px;
+      width: 340px;
+      height: 560px; 
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    h2 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin: 0 0 12px 0;
+      color: var(--primary);
+      text-align: center;
+    }
+
+    .section {
+      background: var(--card);
+      padding: 12px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      margin-bottom: 10px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+    }
+
+    .section strong {
+      display: block;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-light);
+      margin-bottom: 8px;
+    }
+
+    /* CRONOGRAMA - ESTRUTURA PARA FOOTER TRANSPARENTE */
+    #cronograma {
+      display: none; 
+      flex-direction: column;
+      height: 100%;
+      position: relative; /* Necessário para o footer absoluto */
+    }
+
+    .semana-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-shrink: 0;
+    }
+
+    #listaEstudos {
+      flex-grow: 1;
+      overflow-y: auto;
+      padding-right: 4px;
+      /* Padding inferior para o conteúdo não ficar escondido atrás do footer */
+      padding-bottom: 70px; 
+    }
+
+    .dia-bloco {
+      padding: 12px;
+      margin-bottom: 10px;
+      background: #fff;
+      border-radius: 10px;
+      border-left: 4px solid;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+        /* Classe que limita o texto a 1 linha */
+    /* Estilo para o texto das matérias */
+    .conteudo-lista {
+      color: var(--text-light); /* Cor acinzentada usando sua variável */
+      transition: max-height 0.3s ease;
+    }
+
+    /* Quando limitado, cortamos o texto sem mostrar os 3 pontinhos */
+    .conteudo-lista.limitado {
+      max-height: 1.4em; /* Exatamente uma linha (baseada no line-height 1.4) */
+      overflow: hidden;
+      display: block; /* Remove o display webkit-box para sumir com os pontos */
+      mask-image: linear-gradient(to right, black 80%, transparent 100%);
+      -webkit-mask-image: linear-gradient(to right, black 80%, transparent 100%);
+    }
+
+    .btn-toggle {
+      background: none;
+      border: none;
+      color: var(--primary);
+      font-size: 10px;
+      font-weight: bold;
+      cursor: pointer;
+      padding: 4px 0 0 0;
+      margin: 0;
+      text-transform: uppercase;
+      opacity: 0.8;
+    }
+
+    .btn-toggle:hover { opacity: 1; }
+
+    /* FOOTER COM TRANSPARÊNCIA E BLUR */
+    .footer-cronograma {
+      position: absolute;
+      bottom: -16px; /* Ajuste para encostar no limite do body */
+      left: -16px;
+      right: -16px;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      
+      /* Efeito Glassmorphism */
+      background-color: rgba(255, 255, 255, 0.7); 
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      
+      border-top: 1px solid var(--border);
+      z-index: 10;
+    }
+
+    /* RESTO DOS ESTILOS */
+    #seletorDias {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 5px;
+      margin-top: 5px;
+    }
+
+    #seletorDias label {
+      font-size: 10px;
+      background: #f8fafc;
+      padding: 5px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+    }
+
+    .checkbox-group {
+      max-height: 160px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .checkbox-group label {
+      display: flex;
+      align-items: center;
+      padding: 6px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .number-control {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #f8fafc;
+      border-radius: 10px;
+      padding: 4px;
+      border: 1px solid var(--border);
+    }
+
+    .number-control button {
+      width: 30px; height: 30px;
+      border-radius: 8px; border: none;
+      background: white; color: var(--primary);
+      font-weight: bold; cursor: pointer;
+    }
+
+    .number-control input {
+      border: none; background: transparent;
+      width: 40px; text-align: center;
+      font-weight: 700; font-size: 1rem;
+      outline: none;
+    }
+
+    .btn-nav {
+      background: white; border: 1px solid var(--border);
+      border-radius: 8px; width: 32px; height: 32px;
+      cursor: pointer; font-weight: bold;
+    }
+
+    #btnContinuar {
+      background: var(--primary); color: white;
+      border: none; width: 100%; padding: 12px;
+      border-radius: var(--radius); font-weight: 600;
+      cursor: pointer; margin-top: 5px;
+    }
+
+    #btnEditar {
+      background: rgba(239, 185, 68, 0.1);
+      color: rgb(239, 185, 68);
+      border: 1px solid rgb(239, 185, 68);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.75rem;
+      cursor: pointer;
+    }
+
+    /* Container da navegação */
+    .semana-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      background: var(--card);
+      padding: 8px 12px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+    }
+
+    /* Estilo dos botões de seta */
+    .btn-nav {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-light);
+      font-size: 16px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-nav:hover {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.2);
+    }
+
+    .btn-nav:active {
+      transform: translateY(0);
+    }
+
+    /* Ajuste no título da semana para não ficar colado */
+    #tituloSemana {
+      margin: 0;
+      font-size: 1rem;
+      color: var(--text);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+        /* Container do texto central da navegação */
+    .semana-info {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+
+    #tituloSemana {
+      margin: 0;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-light);
+      font-weight: 600;
+    }
+
+    /* Novo ID para o dia que ficará embaixo */
+    #nomeDiaAtivo {
+      margin: 0;
+      font-size: 1.1rem;
+      color: var(--text);
+      font-weight: 800;
+    }
+
+    /* Container central da navegação */
+    .semana-info {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0px; /* Reduzi o espaço para ficarem bem próximos */
+    }
+
+    /* Semana (O destaque agora) */
+    #tituloSemana {
+      margin: 0;
+      font-size: 1.1rem; /* Tamanho maior */
+      color: var(--text);
+      font-weight: 800;
+      line-height: 1.2;
+    }
+
+    /* Nome do Dia (O pequeno embaixo) */
+    #nomeDiaAtivo {
+      margin: 0;
+      font-size: 0.7rem; /* Tamanho pequeno */
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-light);
+      font-weight: 600;
+    }
+
+        /* Overlay com Blur */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(15, 23, 42, 0.4); /* Baseado na sua cor --text */
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      padding: 20px;
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    /* Card do Modal */
+    .modal-content {
+      background: var(--card);
+      padding: 24px;
+      border-radius: var(--radius);
+      width: 280px;
+      text-align: center;
+      border: 1px solid var(--border);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+      animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .modal-icon {
+      font-size: 32px;
+      margin-bottom: 12px;
+    }
+
+    #modalMessage {
+      font-size: 14px;
+      color: var(--text);
+      line-height: 1.5;
+      margin: 0 0 20px 0;
+      font-weight: 500;
+    }
+
+    /* Botão de Fechar Customizado */
+    #modalClose {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      width: 100%;
+      transition: background 0.2s;
+    }
+
+    #modalClose:hover {
+      background: var(--primary-hover);
+    }
+
+    /* Animações */
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes scaleIn { 
+      from { transform: scale(0.9); opacity: 0; } 
+      to { transform: scale(1); opacity: 1; } 
+    }
+
+    .spinner {
+      width: 30px; height: 30px;
+      border: 3px solid #e2e8f0; border-top-color: var(--primary);
+      border-radius: 50%; animation: spin 0.8s linear infinite;
+      margin: 20px auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+    .status-container {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px; /* Bordas arredondadas */
+    padding: 10px 16px;
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 45px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+/* Estilo para quando tudo estiver OK */
+#statusCompleto {
+    color: #10b981; /* Verde sucesso */
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.icon-ok {
+    background: #10b981;
+    color: white;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+}
+
+/* Estilo para pendências */
+#statusPendente {
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.status-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.status-item small {
+    font-size: 9px;
+    text-transform: uppercase;
+    color: var(--text-light);
+    margin-bottom: 2px;
+}
+
+.status-item strong {
+    font-size: 13px;
+    color: var(--text);
+}
+
+.status-divider {
+    width: 1px;
+    height: 25px;
+    background: var(--border);
+}
+
+/* Base para os botões do rodapé */
+.btn-footer-secondary {
+  flex: 1; /* Faz ambos ocuparem o mesmo espaço */
+  padding: 10px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.75rem;
+  cursor: pointer;
+  border: 1px solid;
+  transition: all 0.2s ease;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+/* Variante Amarela (Editar) */
+.btn-edit-cron {
+  background: rgba(239, 185, 68, 0.1);
+  color: rgb(239, 185, 68);
+  border-color: rgb(239, 185, 68);
+}
+
+/* Variante Azul (Filtro/Assistidas) */
+.btn-filter-cron {
+  background: rgba(14, 165, 233, 0.1);
+  color: rgb(14, 165, 233);
+  border-color: rgb(14, 165, 233);
+}
+
+/* Ajuste no container do footer para alinhar os botões */
+.footer-cronograma {
+  /* ... (mantenha suas configurações de glassmorphism) */
+  display: flex;
+  gap: 10px; /* Espaço entre os dois botões */
+  justify-content: center;
+}
+
+/* Botão do Sino */
+.btn-notification {
+    background: rgba(0, 0, 0, 0.03);
+    border: none;
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.badge-alert::after {
+    content: '';
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 10px;
+    height: 10px;
+    background: #ff3b30;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(255, 59, 48, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 59, 48, 0); }
+}
+
+/* Overlay de Notificações */
+.notif-overlay {
+    position: fixed;
+    inset: 0;
+    background: #f8f9fa;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica;
+}
+
+.notif-header {
+    padding: 25px 20px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #fff;
+}
+
+.notif-body {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto;
+}
+
+/* Card de Atraso */
+.card-atraso {
+    background: #fff;
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    border: 1px solid rgba(0,0,0,0.03);
+}
+
+.semana-label {
+    background: #fff1f1;
+    color: #ff3b30;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.tempo-total-box {
+    margin: 15px 0;
+    font-size: 24px;
+    font-weight: 800;
+    color: #1a1a1a;
+}
+
+/* Fundo cinza escuro (mais claro que o preto, mais escuro que o menu) */
+.calc-resumo-box {
+    background: #f1f1f1; /* Cinza escuro premium */
+    color: #161616;
+    padding: 18px;
+    border-radius: 16px;
+    font-size: 13px;
+    line-height: 1.5;
+    margin-top: 15px;
+}
+
+/* Destaque em Negrito (sem cor vermelha) */
+.calc-resumo-box strong {
+    color: #000000;
+    font-weight: 800;
+    font-size: 14px;
+}
+

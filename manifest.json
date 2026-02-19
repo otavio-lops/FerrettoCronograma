@@ -1,0 +1,48 @@
+{
+  "manifest_version": 3,
+  "name": "Ferretto Cronograma Personalizado",
+  "version": "0.1.0",
+  "description": "Personalize seu cronograma de estudos na plataforma do Ferretto.",
+  
+  "content_scripts": [
+    {
+      "matches": [
+        "https://app.professorferretto.com.br/*",
+        "https://legado.professorferretto.com.br/*"
+      ],
+      "js": ["src/content.js"]
+    }
+  ],
+
+  "action": {
+    "default_popup": "preview/index.html",
+    "default_title": "Cronograma Personalizado",
+    "default_icon": {
+      "16": "images/icon.png",
+      "48": "images/icon.png",
+      "128": "images/icon.png"
+    }
+  },
+
+  "permissions": [
+    "storage",
+    "tabs"
+  ],
+
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "preview/index.html",
+        "src/listener.js",
+        "preview/index.css",
+        "preview/index.js",
+        "preview/cronograma.js",
+        "preview/funcoes.js"
+      ],
+      "matches": [
+        "https://app.professorferretto.com.br/*",
+        "https://legado.professorferretto.com.br/*"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerador de Cronograma - Ferretto</title>
+  <script src="./funcoes.js" defer></script>
+  <script src="./index.js" defer></script>
+  <script src="./cronograma.js" defer></script>
+  <link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+  <div id="customAlert" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+      <p id="modalMessage">Mensagem de alerta</p>
+      <button id="modalClose">Entendi</button>
+    </div>
+  </div>
+
+  <div id="acesso_errado" style="display:none">
+    <div class="section" style="text-align: center; border-top: 4px solid var(--danger);">
+      <h2 style="color: var(--danger);">Oops!</h2>
+      <p style="font-size: 13px;">Essa extensão não funciona por clique!<br><br>Ao acessar a plataforma de estudos, ela
+        terá um <b>Botão Flutuante</b> para acessar-la!</p>
+    </div>
+  </div>
+
+  <div id="carregando" style="display:block; text-align: center; margin-top: 100px;">
+    <div class="spinner"></div>
+    <p style="color: var(--text-light); font-size: 13px;">Sincronizando dados...</p>
+  </div>
+
+  <div id="configuracoes" style="display:none">
+    <h2>Configuração</h2>
+    <div class="section">
+      <strong>Suas Matérias</strong>
+      <div class="checkbox-group" id="materias"></div>
+    </div>
+
+    <div class="section">
+      <strong>Dias de Estudo</strong>
+      <div id="seletorDias">
+        <label><input type="checkbox" value="Domingo"> Dom</label>
+        <label><input type="checkbox" value="Segunda-feira" checked> Seg</label>
+        <label><input type="checkbox" value="Terça-feira" checked> Ter</label>
+        <label><input type="checkbox" value="Quarta-feira" checked> Qua</label>
+        <label><input type="checkbox" value="Quinta-feira" checked> Qui</label>
+        <label><input type="checkbox" value="Sexta-feira" checked> Sex</label>
+        <label><input type="checkbox" value="Sábado"> Sáb</label>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+      <div class="section">
+        <strong>Matérias/Dia</strong>
+        <div class="number-control">
+          <button id="menosAulas">−</button>
+          <input type="number" id="qtdAulas" value="3" readonly>
+          <button id="maisAulas">+</button>
+        </div>
+      </div>
+      <div class="section">
+        <strong>Horas/Dia</strong>
+        <div class="number-control">
+          <button id="menosHoras">−</button>
+          <input type="number" id="horasEstudo" value="3" readonly>
+          <button id="maisHoras">+</button>
+        </div>
+      </div>
+    </div>
+    <button id="btnContinuar">Gerar Cronograma</button>
+  </div>
+
+  <div id="primeira_vez" style="display:none">
+    <div class="section" style="text-align: center;">
+      <h2>Bem-vindo(a)!</h2>
+      <p style="font-size: 13px; line-height: 1.6; color: var(--text-light);">
+        É a sua primeira vez! Para a extensão funcionar, acesse a <b>lista de aulas da semana</b> da sua turma.
+        Após isso, ela carregará os dados automaticamente para gerar seu cronograma!<br><br>Ou, se você já está na lista
+        de aulas da semana, <b>atualize a página</b> para começar a utilizar a extensão!
+      </p>
+      <button id="btnAtualizeAPagina" style="
+      background: var(--primary); 
+      color: white; 
+      border: none; 
+      padding: 10px 16px; 
+      border-radius: 8px; 
+      font-weight: 600; 
+      font-size: 12px; 
+      cursor: pointer; 
+      margin-top: 10px;
+      width: 100%;">
+        Atualize a página!
+      </button>
+      <button id="btnIrParaAulas" style="
+      background: var(--primary); 
+      color: white; 
+      border: none; 
+      padding: 10px 16px; 
+      border-radius: 8px; 
+      font-weight: 600; 
+      font-size: 12px; 
+      cursor: pointer; 
+      margin-top: 10px;
+      width: 100%;">
+        Me envie para a lista de turmas!
+      </button>
+    </div>
+  </div>
+
+  <div id="cronograma">
+    <div class="semana-nav">
+      <button id="semanaAnterior" class="btn-nav">←</button>
+      <div class="semana-info">
+        <h3 id="tituloSemana">Semana 1</h3>
+        <span id="nomeDiaAtivo">Segunda-feira</span>
+      </div>
+      <button id="proximaSemana" class="btn-nav">→</button>
+    </div>
+
+    <div id="statusDiaContainer" class="status-container">
+      <div id="statusCompleto" style="display: none;">
+        <span class="icon-ok">✓</span>
+        <span class="status-text">Conteúdo em dia!</span>
+      </div>
+      <div id="statusPendente" style="display: flex;">
+        <div class="status-item">
+          <small>Horas Pendentes</small>
+          <strong id="horasPendentes">00:00</strong>
+        </div>
+        <div class="status-divider"></div>
+        <div class="status-item">
+          <small>Aulas Assistidas</small>
+          <strong id="aulasAssistidas">0/0</strong>
+        </div>
+      </div>
+    </div>
+
+    <div id="listaEstudos"></div>
+
+    <div class="footer-cronograma">
+      <div style="display: flex; flex-direction: column;">
+        <span style="font-size: 9px; text-transform: uppercase; opacity: 0.6; letter-spacing: 0.5px;">Carga do
+          dia</span>
+        <span id="tempoTotalDiaFooter" style="font-weight: 800; color: var(--primary); font-size: 15px;">00h00</span>
+      </div>
+      <button id="btnEditar">Editar Cronograma</button>
+    </div>
+  </div>
+
+</body>
+
+</html>
