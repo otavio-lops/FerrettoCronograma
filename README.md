@@ -15,9 +15,9 @@ A ferramenta nativa de cronograma da plataforma possui limitações que podem di
 
 ## 📸 Demonstração da Interface
 
-| Configuração Inicial | Cronograma de Estudos | Organizador de Atrasos |
+| Configuração Inicial (1) | Configuração Inicial (2) | Cronograma de Estudos | 
 | :---: | :---: | :---: |
-| <img src="https://raw.githubusercontent.com/otavio-lops/CronogramaSimples/refs/heads/main/images/exemplo-1.webp" width="300"> | <img src="https://raw.githubusercontent.com/otavio-lops/CronogramaSimples/refs/heads/main/images/exemplo-2.webp" width="300"> | <img src="https://raw.githubusercontent.com/otavio-lops/CronogramaSimples/refs/heads/main/images/exemplo-3.webp" width="300">
+| <img src="https://raw.githubusercontent.com/otavio-lops/FerrettoCronograma/refs/heads/main/images/preview1.png" width="300"> | <img src="https://raw.githubusercontent.com/otavio-lops/FerrettoCronograma/refs/heads/main/images/preview2.png" width="300"> | <img src="https://raw.githubusercontent.com/otavio-lops/FerrettoCronograma/refs/heads/main/images/preview3.png" width="300">
 
 ## 🛡️ Segurança e Transparência
 Esta é uma extensão **passiva** e focada em privacidade.
