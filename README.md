@@ -63,7 +63,7 @@ Tecnicamente, a extensão atua apenas no seu computador e não quebra nenhuma re
 Pela personalização. Você pode definir matérias por dia (e não apenas horas), escolher dias específicos da semana e gerenciar atrasos de forma muito mais intuitiva.
 
 **6. A extensão funciona no celular (Android/iOS)?**
-Depende. Ela foi projetada para navegadores desktop baseados em Chromium (Chrome, Edge, Brave, Opera, etc.), porém, alguns navegadores de celular permitem a adição de extensões, verifique diretamente no seu navegador.
+Depende. Ela foi projetada para navegadores desktop baseados no Firefox ou Chromium, porém, alguns navegadores de celular permitem a adição de extensões, verifique diretamente no seu navegador.
 
 **7. O que acontece se a plataforma Ferretto atualizar o site?**
 Mudanças drásticas no código da plataforma podem fazer a extensão parar de funcionar temporariamente até que o código aqui no GitHub seja atualizado, já que a extensão depende exclusivamente da leitura do tempo de aula e matérias que a plataforma envia.
