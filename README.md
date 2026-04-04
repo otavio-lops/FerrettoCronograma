@@ -12,6 +12,8 @@ A ferramenta nativa de cronograma da plataforma possui limitações que podem di
 * **Planejamento Flexível:** Defina exatamente quais dias da semana você quer estudar e a carga horária diária desejada.
 * **Edição Dinâmica:** Permite ajustes no cronograma mesmo após a criação inicial, adaptando-se a imprevistos da vida real.
 * **Acesso Rápido:** Com a nova atualização, você pode acessar o cronograma em qualquer página, e mover ela para onde você quiser na sua tela, permitindo que você tenha melhor controle sobre a organização visual.
+* **Zero requisições externas:** Nenhum dado é enviado para servidores. Toda a lógica roda localmente no navegador.
+* **Funcionamento passivo:** A extensão não interfere no funcionamento da plataforma, ela apenas reorganiza os dados que já são exibidos da sua turma!
 
 ## 📸 Demonstração da Interface
 
@@ -35,7 +37,7 @@ Este projeto **não possui fins lucrativos ou financeiros**. Ele nasceu da neces
 > **Nota sobre atualizações:** Como também sou vestibulando, talvez eu não consiga me dedicar o tempo todo para trazer novas melhorias/atualizações. No entanto, a versão atual já funciona perfeitamente para o propósito inicial, inclusive, eu a utilizo diariamente na minha própria rotina de estudos! ;)
 
 ## 🛠️ Como Instalar (Manual)
-> Observação: O método de instalação abaixo não é compatível com os navegadores "Firefox", para o Firefox, tem duas alternativas, rápida, e a mais privada: A mais privada consiste em você mesmo instalar a extensão do zero, compactar e enviar para a Mozilla de forma privada, é lento e precisa de conhecimento técnico; A mais rápida consiste em você instalar a extensão já autenticada na Mozilla na página de Downloads desse repositório, todo processo já foi feito, você precisa apenas instalar.
+> Para usuários de Firefox/Forks: Siga o passo a passo de instalação no Release ``Firefox: Instalar Cronograma``, ou clique [aqui](https://github.com/otavio-lops/FerrettoCronograma/releases/tag/v1.5.0).
 1. Faça o download do código deste repositório.
 2. No seu navegador (Chrome/Edge/Brave/Outros...), acesse `chrome://extensions/`.
 3. Ative o **Modo do Desenvolvedor**.
