@@ -23,40 +23,78 @@ const cyrb53 = (str, seed = 0) => {
   return 4294967296 * (2097151 & h2) + (h1 >>> 0);
 };
 
+const STORAGE_DB_PADRAO = {
+  materias: [],
+  aulas_id: {},
+  aulas: {},
+};
+
+function criarChaveItemConteudo(categoria, item) {
+  return [
+    categoria,
+    item.titulo || item.nome || "",
+    item.duracao || 0,
+  ].join("::");
+}
+
+async function carregarBancoLocal() {
+  const checkDb = await contentApi.storageGet(["weeks"]);
+  return checkDb.weeks ? checkDb.weeks : {
+    ...STORAGE_DB_PADRAO,
+    aulas_id: {},
+    aulas: {},
+    materias: [],
+  };
+}
+
+async function salvarBancoLocal(dados) {
+  await contentApi.storageSet({ weeks: dados });
+}
+
 window.addEventListener("message", async (e) => {
-  if (e.data?.type !== "DATA_CAPTURED") {
+  if (e.data?.type === "DATA_CAPTURED") {
+    const localDatabase = {
+      changed: false,
+      object: await carregarBancoLocal(),
+    };
+
+    const aulasFormatadas = formatarAulas(e.data.payload.week_content.data.studyPlanByWeek.nodes);
+    const hashAntigo = localDatabase.object.aulas_id[e.data.payload.week_number] || "";
+    const hashNovo = aulasFormatadas.hash;
+
+    if (hashAntigo !== hashNovo) {
+      localDatabase.changed = true;
+      localDatabase.object.aulas_id[e.data.payload.week_number] = aulasFormatadas.hash;
+      localDatabase.object.aulas[e.data.payload.week_number] = aulasFormatadas.content;
+      localDatabase.object.materias = Array.from(
+        new Set(localDatabase.object.materias.concat(Object.keys(aulasFormatadas.content)))
+      );
+    }
+
+    if (sincronizarStatusConclusao(localDatabase.object.aulas)) {
+      localDatabase.changed = true;
+    }
+
+    if (localDatabase.changed) {
+      await salvarBancoLocal(localDatabase.object);
+    }
+
     return;
   }
 
-  const localDatabase = {
-    changed: false,
-    object: {
-      materias: [],
-      aulas_id: {},
-      aulas: {},
-    },
-  };
+  if (e.data?.type === "RESOURCE_STATUS_CAPTURED") {
+    const atualizacoes = Array.isArray(e.data.payload?.items) ? e.data.payload.items : [];
+    if (!atualizacoes.length) {
+      return;
+    }
 
-  const checkDb = await contentApi.storageGet(["weeks"]);
-  if (checkDb.weeks) {
-    localDatabase.object = checkDb.weeks;
-  }
+    const localDatabase = await carregarBancoLocal();
+    const houveMudancaPorCaptura = aplicarAtualizacoesDeConclusao(localDatabase.aulas, atualizacoes);
+    const houveMudancaPorSincronizacao = sincronizarStatusConclusao(localDatabase.aulas);
 
-  const aulasFormatadas = formatarAulas(e.data.payload.week_content.data.studyPlanByWeek.nodes);
-  const hashAntigo = localDatabase.object.aulas_id[e.data.payload.week_number] || "";
-  const hashNovo = aulasFormatadas.hash;
-
-  if (hashAntigo !== hashNovo) {
-    localDatabase.changed = true;
-    localDatabase.object.aulas_id[e.data.payload.week_number] = aulasFormatadas.hash;
-    localDatabase.object.aulas[e.data.payload.week_number] = aulasFormatadas.content;
-    localDatabase.object.materias = Array.from(
-      new Set(localDatabase.object.materias.concat(Object.keys(aulasFormatadas.content)))
-    );
-  }
-
-  if (localDatabase.changed) {
-    await contentApi.storageSet({ weeks: localDatabase.object });
+    if (houveMudancaPorCaptura || houveMudancaPorSincronizacao) {
+      await salvarBancoLocal(localDatabase);
+    }
   }
 });
 
@@ -85,6 +123,14 @@ async function puxarAulas() {
 }
 
 function formatarAulas(data) {
+  const obterIdentificadorItem = (recurso) =>
+    recurso?.id ??
+    recurso?.item?.id ??
+    recurso?.item?._id ??
+    recurso?.item?.resourceId ??
+    recurso?.item?.resource?.id ??
+    null;
+
   const obterStatusConclusao = (item) => Boolean(
     item?.watched ??
     item?.completed ??
@@ -102,26 +148,39 @@ function formatarAulas(data) {
       const aulas = conteudo.resources
         .filter((aula) => aula.type === "CLASS")
         .map((aula) => ({
+          id: obterIdentificadorItem(aula),
           semana: item.weekNumber,
           titulo: aula.item.title,
           duracao: aula.item.mainVideo.timeInSeconds,
           assistida: obterStatusConclusao(aula.item),
+          chave: criarChaveItemConteudo("aula", {
+            titulo: aula.item.title,
+            duracao: aula.item.mainVideo.timeInSeconds,
+          }),
         }));
 
       const exercicios = conteudo.resources
         .filter((aula) => aula.type === "QUESTIONS_SUBJECT")
         .map((aula) => ({
+          id: obterIdentificadorItem(aula),
           semana: item.weekNumber,
           titulo: aula.item.name,
           assistida: obterStatusConclusao(aula.item),
+          chave: criarChaveItemConteudo("questoes", {
+            titulo: aula.item.name,
+          }),
         }));
 
       const simulados = conteudo.resources
         .filter((aula) => aula.type === "SIMULATED")
         .map((aula) => ({
+          id: obterIdentificadorItem(aula),
           semana: item.weekNumber,
           titulo: aula.item.title,
           assistida: obterStatusConclusao(aula.item),
+          chave: criarChaveItemConteudo("simulado", {
+            titulo: aula.item.title,
+          }),
         }));
 
       disciplinas[nomeDaDisciplina] = {
@@ -136,6 +195,115 @@ function formatarAulas(data) {
     hash: cyrb53(JSON.stringify(disciplinas)),
     content: disciplinas,
   };
+}
+
+function aplicarAtualizacoesDeConclusao(aulasPorSemana, atualizacoes) {
+  const idsConcluidos = new Set();
+  const chavesConcluidas = new Set();
+  let houveAlteracao = false;
+
+  atualizacoes.forEach((item) => {
+    if (!item?.assistida) {
+      return;
+    }
+
+    if (item.id !== null && typeof item.id !== "undefined") {
+      idsConcluidos.add(String(item.id));
+    }
+
+    if (item.chave) {
+      chavesConcluidas.add(item.chave);
+    }
+  });
+
+  if (!idsConcluidos.size && !chavesConcluidas.size) {
+    return false;
+  }
+
+  const sincronizarColecao = (categoria, itens = []) => {
+    itens.forEach((item) => {
+      if (item?.assistida) {
+        return;
+      }
+
+      const chaveItem = item.chave || criarChaveItemConteudo(categoria, item);
+      const correspondeAoStatusNovo = (
+        item.id !== null
+        && typeof item.id !== "undefined"
+        && idsConcluidos.has(String(item.id))
+      ) || chavesConcluidas.has(chaveItem);
+
+      if (correspondeAoStatusNovo) {
+        item.assistida = true;
+        houveAlteracao = true;
+      }
+    });
+  };
+
+  Object.values(aulasPorSemana || {}).forEach((materias) => {
+    Object.values(materias || {}).forEach((conteudo) => {
+      sincronizarColecao("aula", conteudo?.aulas);
+      sincronizarColecao("questoes", conteudo?.exercicios);
+      sincronizarColecao("simulado", conteudo?.simulados);
+    });
+  });
+
+  return houveAlteracao;
+}
+
+function sincronizarStatusConclusao(aulasPorSemana) {
+  const itensConcluidos = new Set();
+  let houveAlteracao = false;
+
+  const registrarChavesConcluidas = (materia, categoria, itens = []) => {
+    itens.forEach((item) => {
+      if (!item?.assistida) {
+        return;
+      }
+
+      if (item.id) {
+        itensConcluidos.add(`id::${item.id}`);
+      }
+
+      const chaveFallback = item.chave || criarChaveItemConteudo(categoria, item);
+      itensConcluidos.add(`fp::${materia}::${chaveFallback}`);
+    });
+  };
+
+  Object.entries(aulasPorSemana || {}).forEach(([, materias]) => {
+    Object.entries(materias || {}).forEach(([materia, conteudo]) => {
+      registrarChavesConcluidas(materia, "aula", conteudo?.aulas);
+      registrarChavesConcluidas(materia, "questoes", conteudo?.exercicios);
+      registrarChavesConcluidas(materia, "simulado", conteudo?.simulados);
+    });
+  });
+
+  const sincronizarColecao = (materia, categoria, itens = []) => {
+    itens.forEach((item) => {
+      if (item?.assistida) {
+        return;
+      }
+
+      const chaveFallback = item.chave || criarChaveItemConteudo(categoria, item);
+      const deveMarcarConcluida = (item.id && itensConcluidos.has(`id::${item.id}`))
+        || itensConcluidos.has(`fp::${materia}::${chaveFallback}`);
+
+      if (deveMarcarConcluida) {
+        item.assistida = true;
+        houveAlteracao = true;
+      }
+    });
+  };
+
+  Object.values(aulasPorSemana || {}).forEach((materias) => {
+    Object.entries(materias || {}).forEach(([materia, conteudo]) => {
+      sincronizarColecao(materia, "aula", conteudo?.aulas);
+      sincronizarColecao(materia, "questoes", conteudo?.exercicios);
+      sincronizarColecao(materia, "simulado", conteudo?.simulados);
+    });
+  });
+
+  return houveAlteracao;
 }
 
 const allowedOrigins = [
@@ -395,10 +563,8 @@ if (allowedOrigins.some((url) => window.location.href.includes(url))) {
     btn.classList.add("expandido");
     btn.textContent = "Fechar";
 
-    const iframeUrl = contentApi.runtimeGetURL("preview/index.html?origin=button");
-    if (iframe.src !== iframeUrl) {
-      iframe.src = iframeUrl;
-    }
+    const iframeUrl = contentApi.runtimeGetURL(`preview/index.html?origin=button&ts=${Date.now()}`);
+    iframe.src = iframeUrl;
   };
 
   const encerrarArraste = async () => {

@@ -12,6 +12,7 @@ const menus = {
   configuracoes: document.getElementById("configuracoes"),
   cronograma: document.getElementById("cronograma"),
 };
+let carregandoEstado = false;
 
 function mostrarTela(nome) {
   Object.values(menus).forEach((menu) => {
@@ -24,6 +25,12 @@ function mostrarTela(nome) {
 }
 
 async function load() {
+  if (carregandoEstado) {
+    return;
+  }
+
+  carregandoEstado = true;
+
   try {
     const state = await popupApi.runtimeSendMessage({ action: "load_popup_state" });
 
@@ -56,6 +63,8 @@ async function load() {
     mostrarTela("primeira_vez");
   } catch (error) {
     mostrarTela("primeira_vez");
+  } finally {
+    carregandoEstado = false;
   }
 }
 
@@ -171,3 +180,21 @@ window.onload = async () => {
 
   mostrarTela("acesso_errado");
 };
+
+if (popupApi.raw?.storage?.onChanged) {
+  popupApi.raw.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName !== "local") {
+      return;
+    }
+
+    if (!changes.weeks && !changes.settings) {
+      return;
+    }
+
+    if (menus.cronograma.style.display !== "flex") {
+      return;
+    }
+
+    load();
+  });
+}
