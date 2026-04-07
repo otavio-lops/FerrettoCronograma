@@ -1,6 +1,6 @@
 /**
  * content.js
- * Faz a ponte entre a pagina do Ferretto e a logica da extensao.
+ * Faz a ponte entre a página do Ferretto e a lógica da extensão.
  */
 
 const contentApi = globalThis.extensionApi;
@@ -144,44 +144,61 @@ function formatarAulas(data) {
   for (const item of data) {
     for (const conteudo of item.disciplinesResources) {
       const nomeDaDisciplina = conteudo.discipline.name;
+      const aulas = [];
+      const exercicios = [];
+      const simulados = [];
 
-      const aulas = conteudo.resources
-        .filter((aula) => aula.type === "CLASS")
-        .map((aula) => ({
-          id: obterIdentificadorItem(aula),
-          semana: item.weekNumber,
-          titulo: aula.item.title,
-          duracao: aula.item.mainVideo.timeInSeconds,
-          assistida: obterStatusConclusao(aula.item),
-          chave: criarChaveItemConteudo("aula", {
-            titulo: aula.item.title,
-            duracao: aula.item.mainVideo.timeInSeconds,
-          }),
-        }));
+      (conteudo.resources || []).forEach((recurso, ordem) => {
+        if (recurso.type === "CLASS") {
+          const duracao = recurso?.item?.mainVideo?.timeInSeconds ?? 0;
+          const titulo = recurso?.item?.title || "";
 
-      const exercicios = conteudo.resources
-        .filter((aula) => aula.type === "QUESTIONS_SUBJECT")
-        .map((aula) => ({
-          id: obterIdentificadorItem(aula),
-          semana: item.weekNumber,
-          titulo: aula.item.name,
-          assistida: obterStatusConclusao(aula.item),
-          chave: criarChaveItemConteudo("questoes", {
-            titulo: aula.item.name,
-          }),
-        }));
+          aulas.push({
+            id: obterIdentificadorItem(recurso),
+            semana: item.weekNumber,
+            ordem,
+            titulo,
+            duracao,
+            assistida: obterStatusConclusao(recurso.item),
+            chave: criarChaveItemConteudo("aula", {
+              titulo,
+              duracao,
+            }),
+          });
+          return;
+        }
 
-      const simulados = conteudo.resources
-        .filter((aula) => aula.type === "SIMULATED")
-        .map((aula) => ({
-          id: obterIdentificadorItem(aula),
-          semana: item.weekNumber,
-          titulo: aula.item.title,
-          assistida: obterStatusConclusao(aula.item),
-          chave: criarChaveItemConteudo("simulado", {
-            titulo: aula.item.title,
-          }),
-        }));
+        if (recurso.type === "QUESTIONS_SUBJECT") {
+          const titulo = recurso?.item?.name || "";
+
+          exercicios.push({
+            id: obterIdentificadorItem(recurso),
+            semana: item.weekNumber,
+            ordem,
+            titulo,
+            assistida: obterStatusConclusao(recurso.item),
+            chave: criarChaveItemConteudo("questoes", {
+              titulo,
+            }),
+          });
+          return;
+        }
+
+        if (recurso.type === "SIMULATED") {
+          const titulo = recurso?.item?.title || "";
+
+          simulados.push({
+            id: obterIdentificadorItem(recurso),
+            semana: item.weekNumber,
+            ordem,
+            titulo,
+            assistida: obterStatusConclusao(recurso.item),
+            chave: criarChaveItemConteudo("simulado", {
+              titulo,
+            }),
+          });
+        }
+      });
 
       disciplinas[nomeDaDisciplina] = {
         aulas,

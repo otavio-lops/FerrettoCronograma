@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Ferretto Cronograma Personalizado",
-  "version": "1.5.1",
+  "version": "1.5.2",
   "description": "Personalize seu cronograma de estudos na plataforma do Ferretto.",
   "icons": {
     "16": "images/icon.png",

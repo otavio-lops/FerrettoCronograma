@@ -2,11 +2,11 @@ const scheduleApi = globalThis.extensionApi;
 
 const TODOS_OS_DIAS = [
   "Segunda-feira",
-  "Ter\u00e7a-feira",
+  "Terça-feira",
   "Quarta-feira",
   "Quinta-feira",
   "Sexta-feira",
-  "S\u00e1bado",
+  "Sábado",
   "Domingo",
 ];
 
@@ -18,6 +18,11 @@ let DIAS_SEMANA_USUARIO = [];
 let exibirAssistidas = false;
 const DURACAO_QUESTOES = 30 * 60;
 const DURACAO_SIMULADO = 40 * 60;
+const ORDEM_PADRAO_CATEGORIA = {
+  aula: 0,
+  questoes: 1,
+  simulado: 2,
+};
 
 function filtrarMaterias(dadosOriginais, selecionadas) {
   const filtrados = {};
@@ -75,6 +80,11 @@ function normalizarDuracao(valor, padrao = 0) {
   return Number.isFinite(numero) && numero > 0 ? numero : padrao;
 }
 
+function normalizarOrdemSequencia(valor) {
+  const numero = Number(valor);
+  return Number.isInteger(numero) && numero >= 0 ? numero : null;
+}
+
 function normalizarItemConteudo(item, categoria) {
   const duracaoPadrao = categoria === "simulado"
     ? DURACAO_SIMULADO
@@ -88,6 +98,7 @@ function normalizarItemConteudo(item, categoria) {
     duracao: normalizarDuracao(item.duracao, duracaoPadrao),
     categoria,
     semana: item.semana ?? null,
+    ordem: normalizarOrdemSequencia(item.ordem),
   };
 }
 
@@ -97,11 +108,44 @@ function clonarDetalhe(item) {
     assistida: Boolean(item.assistida),
     duracao: normalizarDuracao(item.duracao),
     categoria: item.categoria || "aula",
+    ordem: normalizarOrdemSequencia(item.ordem),
   };
 }
 
+function compararItensPorSequencia(a, b) {
+  const ordemA = normalizarOrdemSequencia(a?.ordem);
+  const ordemB = normalizarOrdemSequencia(b?.ordem);
+
+  if (ordemA !== null || ordemB !== null) {
+    if (ordemA === null) {
+      return 1;
+    }
+
+    if (ordemB === null) {
+      return -1;
+    }
+
+    if (ordemA !== ordemB) {
+      return ordemA - ordemB;
+    }
+  }
+
+  const prioridadeCategoriaA = ORDEM_PADRAO_CATEGORIA[a?.categoria] ?? Number.MAX_SAFE_INTEGER;
+  const prioridadeCategoriaB = ORDEM_PADRAO_CATEGORIA[b?.categoria] ?? Number.MAX_SAFE_INTEGER;
+
+  if (prioridadeCategoriaA !== prioridadeCategoriaB) {
+    return prioridadeCategoriaA - prioridadeCategoriaB;
+  }
+
+  return 0;
+}
+
+function ordenarItensPorSequencia(itens = []) {
+  return itens.sort(compararItensPorSequencia);
+}
+
 function extrairItensSelecionados(conteudo, opcoesConteudo) {
-  return [
+  return ordenarItensPorSequencia([
     ...(conteudo.aulas || []).map((item) => normalizarItemConteudo(item, "aula")),
     ...(opcoesConteudo.incluirQuestoes
       ? (conteudo.exercicios || []).map((item) => normalizarItemConteudo(item, "questoes"))
@@ -109,7 +153,7 @@ function extrairItensSelecionados(conteudo, opcoesConteudo) {
     ...(opcoesConteudo.incluirSimulados
       ? (conteudo.simulados || []).map((item) => normalizarItemConteudo(item, "simulado"))
       : []),
-  ];
+  ]);
 }
 
 function criarGrupoAtrasado(materia, semanaOriginal, itens) {
@@ -359,7 +403,7 @@ function criarEstruturaSemana(diasSelecionados) {
 }
 
 function criarFilaAPartirDeGrupo(grupo) {
-  return grupo.itens.map((item) => ({
+  return ordenarItensPorSequencia([...grupo.itens]).map((item) => ({
     ...item,
     materia: grupo.materia,
     blocoId: grupo.id,
@@ -411,11 +455,19 @@ function garantirBlocoNoDia(dia, item) {
       tempoTotal: 0,
       tempoAssistido: 0,
       itensConcluidos: 0,
+      ordemPrimeiroItem: item.ordemDistribuicao ?? Number.MAX_SAFE_INTEGER,
       detalhes: [],
     };
   }
 
-  return dia.blocos[item.blocoId];
+  const bloco = dia.blocos[item.blocoId];
+  const ordemAtual = item.ordemDistribuicao ?? Number.MAX_SAFE_INTEGER;
+
+  if (ordemAtual < (bloco.ordemPrimeiroItem ?? Number.MAX_SAFE_INTEGER)) {
+    bloco.ordemPrimeiroItem = ordemAtual;
+  }
+
+  return bloco;
 }
 
 function adicionarItemAoDia(dia, item) {
@@ -450,7 +502,7 @@ function podeAdicionarItem(
   return (jaTemMateria || podeAdicionarNovaMateria) && cabeNaTolerancia;
 }
 
-function escolherDiaParaItem(
+function escolherDiaSequencialParaItem(
   diasDeEstudo,
   item,
   indiceInicial,
@@ -458,44 +510,45 @@ function escolherDiaParaItem(
   limiteSegundosIdeal,
   margemTolerancia
 ) {
-  for (let passo = 0; passo < diasDeEstudo.length; passo += 1) {
-    const indiceDia = (indiceInicial + passo) % diasDeEstudo.length;
-    const dia = diasDeEstudo[indiceDia];
+  const indicePartida = Math.min(
+    Math.max(indiceInicial, 0),
+    diasDeEstudo.length - 1
+  );
 
+  for (let indiceDia = indicePartida; indiceDia < diasDeEstudo.length; indiceDia += 1) {
+    const dia = diasDeEstudo[indiceDia];
     if (podeAdicionarItem(dia, item, materiasPorDia, limiteSegundosIdeal, margemTolerancia)) {
       return indiceDia;
     }
   }
 
-  for (let passo = 0; passo < diasDeEstudo.length; passo += 1) {
-    const indiceDia = (indiceInicial + passo) % diasDeEstudo.length;
+  for (let indiceDia = indicePartida; indiceDia < diasDeEstudo.length; indiceDia += 1) {
     const dia = diasDeEstudo[indiceDia];
-
     if (podeAdicionarItem(dia, item, materiasPorDia, limiteSegundosIdeal, margemTolerancia, true)) {
       return indiceDia;
     }
   }
 
-  let indiceMenorCarga = 0;
-
-  for (let i = 1; i < diasDeEstudo.length; i += 1) {
-    if (diasDeEstudo[i].segundosUsados < diasDeEstudo[indiceMenorCarga].segundosUsados) {
-      indiceMenorCarga = i;
-    }
-  }
-
-  return indiceMenorCarga;
+  return diasDeEstudo.length - 1;
 }
 
-function distribuirFilaEmRodizio(diasDeEstudo, fila, materiasPorDia, limiteSegundosIdeal, margemTolerancia) {
+function distribuirFilaEmSequencia(
+  diasDeEstudo,
+  fila,
+  materiasPorDia,
+  limiteSegundosIdeal,
+  margemTolerancia,
+  sequenciadorDistribuicao
+) {
   if (!fila.length || !diasDeEstudo.length) {
     return;
   }
 
+  const sequenciador = sequenciadorDistribuicao || { valor: 0 };
   let cursorDia = 0;
 
   fila.forEach((item) => {
-    const indiceDia = escolherDiaParaItem(
+    const indiceDia = escolherDiaSequencialParaItem(
       diasDeEstudo,
       item,
       cursorDia,
@@ -504,41 +557,118 @@ function distribuirFilaEmRodizio(diasDeEstudo, fila, materiasPorDia, limiteSegun
       margemTolerancia
     );
 
-    adicionarItemAoDia(diasDeEstudo[indiceDia], item);
-    cursorDia = (indiceDia + 1) % diasDeEstudo.length;
+    adicionarItemAoDia(diasDeEstudo[indiceDia], {
+      ...item,
+      ordemDistribuicao: sequenciador.valor,
+    });
+    sequenciador.valor += 1;
+    cursorDia = indiceDia;
   });
 }
 
-function escolherDiaParaRedistribuicao(diasAlvo, item, materiasPorDia) {
-  const candidatosPreferenciais = diasAlvo.filter((dia) => {
+function escolherDiaParaAtrasado(
+  diasAlvo,
+  item,
+  materiasPorDia,
+  limiteSegundosIdeal,
+  margemTolerancia
+) {
+  const candidatosComLimiteDeMateria = diasAlvo.filter((dia) => {
     return dia.materiasNoDia.has(item.materia) || dia.materiasNoDia.size < materiasPorDia;
   });
 
-  const candidatos = candidatosPreferenciais.length > 0 ? candidatosPreferenciais : diasAlvo;
+  const candidatosBase = candidatosComLimiteDeMateria.length > 0 ? candidatosComLimiteDeMateria : diasAlvo;
+  const limiteComTolerancia = limiteSegundosIdeal + margemTolerancia;
+  const candidatosNaTolerancia = candidatosBase.filter((dia) => {
+    return dia.segundosUsados + item.duracao <= limiteComTolerancia;
+  });
+  const candidatos = candidatosNaTolerancia.length > 0 ? candidatosNaTolerancia : candidatosBase;
+
+  const montarMetricas = (diaCandidato) => {
+    const cargasProjetadas = diasAlvo.map((diaAtual) => {
+      return diaAtual === diaCandidato
+        ? diaAtual.segundosUsados + item.duracao
+        : diaAtual.segundosUsados;
+    });
+    const totalProjetado = cargasProjetadas.reduce((total, carga) => total + carga, 0);
+    const mediaProjetada = totalProjetado / cargasProjetadas.length;
+
+    return {
+      excesso: Math.max(0, (diaCandidato.segundosUsados + item.duracao) - limiteComTolerancia),
+      intervalo: Math.max(...cargasProjetadas) - Math.min(...cargasProjetadas),
+      desvioTotal: cargasProjetadas.reduce((total, carga) => {
+        return total + Math.abs(carga - mediaProjetada);
+      }, 0),
+      projecao: diaCandidato.segundosUsados + item.duracao,
+      mesmaMateria: diaCandidato.materiasNoDia.has(item.materia) ? 0 : 1,
+      ordemDia: TODOS_OS_DIAS.indexOf(diaCandidato.nome),
+    };
+  };
 
   return candidatos.reduce((melhorDia, dia) => {
     if (!melhorDia) {
       return dia;
     }
 
-    if (dia.segundosUsados !== melhorDia.segundosUsados) {
-      return dia.segundosUsados < melhorDia.segundosUsados ? dia : melhorDia;
+    const metricasDia = montarMetricas(dia);
+    const metricasMelhor = montarMetricas(melhorDia);
+
+    if (metricasDia.excesso !== metricasMelhor.excesso) {
+      return metricasDia.excesso < metricasMelhor.excesso ? dia : melhorDia;
     }
 
-    return TODOS_OS_DIAS.indexOf(dia.nome) < TODOS_OS_DIAS.indexOf(melhorDia.nome) ? dia : melhorDia;
+    if (metricasDia.intervalo !== metricasMelhor.intervalo) {
+      return metricasDia.intervalo < metricasMelhor.intervalo ? dia : melhorDia;
+    }
+
+    if (metricasDia.desvioTotal !== metricasMelhor.desvioTotal) {
+      return metricasDia.desvioTotal < metricasMelhor.desvioTotal ? dia : melhorDia;
+    }
+
+    if (metricasDia.projecao !== metricasMelhor.projecao) {
+      return metricasDia.projecao < metricasMelhor.projecao ? dia : melhorDia;
+    }
+
+    if (metricasDia.mesmaMateria !== metricasMelhor.mesmaMateria) {
+      return metricasDia.mesmaMateria < metricasMelhor.mesmaMateria ? dia : melhorDia;
+    }
+
+    return metricasDia.ordemDia < metricasMelhor.ordemDia ? dia : melhorDia;
   }, null);
 }
 
-function distribuirFilaAtrasadaEqualizada(diasAlvo, fila, materiasPorDia) {
+function distribuirFilaAtrasadaAoLongoDaSemana(
+  diasAlvo,
+  fila,
+  materiasPorDia,
+  limiteSegundosIdeal,
+  margemTolerancia,
+  sequenciadorDistribuicao
+) {
   if (!fila.length || !diasAlvo.length) {
     return;
   }
 
+  const sequenciador = sequenciadorDistribuicao || { valor: 0 };
+
   fila.forEach((item) => {
-    const diaEscolhido = escolherDiaParaRedistribuicao(diasAlvo, item, materiasPorDia);
-    if (diaEscolhido) {
-      adicionarItemAoDia(diaEscolhido, item);
+    const diaEscolhido = escolherDiaParaAtrasado(
+      diasAlvo,
+      item,
+      materiasPorDia,
+      limiteSegundosIdeal,
+      margemTolerancia
+    );
+
+    if (!diaEscolhido) {
+      return;
     }
+
+    adicionarItemAoDia(diaEscolhido, {
+      ...item,
+      ordemDistribuicao: sequenciador.valor,
+    });
+    sequenciador.valor += 1;
   });
 }
 
@@ -564,8 +694,47 @@ function compararBlocosOuGrupos(a, b) {
   return a.materia.localeCompare(b.materia);
 }
 
+function compararPrioridadeCronologica(a, b) {
+  if (a.prioridade !== b.prioridade) {
+    return a.prioridade - b.prioridade;
+  }
+
+  const semanaA = a.semanaOriginal ?? Number.MAX_SAFE_INTEGER;
+  const semanaB = b.semanaOriginal ?? Number.MAX_SAFE_INTEGER;
+
+  if (semanaA !== semanaB) {
+    return semanaA - semanaB;
+  }
+
+  const diaA = a.diaOriginal ? TODOS_OS_DIAS.indexOf(a.diaOriginal) : Number.MAX_SAFE_INTEGER;
+  const diaB = b.diaOriginal ? TODOS_OS_DIAS.indexOf(b.diaOriginal) : Number.MAX_SAFE_INTEGER;
+
+  if (diaA !== diaB) {
+    return diaA - diaB;
+  }
+ 
+  return 0;
+}
+
+function compararBlocosParaRender(a, b) {
+  const comparacaoCronologica = compararPrioridadeCronologica(a, b);
+
+  if (comparacaoCronologica !== 0) {
+    return comparacaoCronologica;
+  }
+
+  const ordemA = a.ordemPrimeiroItem ?? Number.MAX_SAFE_INTEGER;
+  const ordemB = b.ordemPrimeiroItem ?? Number.MAX_SAFE_INTEGER;
+
+  if (ordemA !== ordemB) {
+    return ordemA - ordemB;
+  }
+
+  return compararBlocosOuGrupos(a, b);
+}
+
 function ordenarBlocosParaRender(blocos) {
-  return Object.values(blocos).sort(compararBlocosOuGrupos);
+  return Object.values(blocos).sort(compararBlocosParaRender);
 }
 
 function atualizarBlocoAposMoverPendencias(bloco, itensRestantes) {
@@ -609,7 +778,15 @@ function recomputarMateriasNoDia(dia) {
   dia.materiasNoDia = new Set(Object.values(dia.blocos).map((item) => item.materia));
 }
 
-function extrairAtrasadosDaSemanaAtual(estruturaSeteDias, diasDestino, indiceDiaAtual, materiasPorDia) {
+function extrairAtrasadosDaSemanaAtual(
+  estruturaSeteDias,
+  diasDestino,
+  indiceDiaAtual,
+  materiasPorDia,
+  limiteSegundosIdeal,
+  margemTolerancia,
+  sequenciadorDistribuicao
+) {
   if (!diasDestino.length || indiceDiaAtual <= 0) {
     return;
   }
@@ -656,7 +833,14 @@ function extrairAtrasadosDaSemanaAtual(estruturaSeteDias, diasDestino, indiceDia
   const gruposRedistribuidos = Array.from(backlogSemanaAtual.values()).sort(compararBlocosOuGrupos);
 
   const filaRedistribuida = gruposRedistribuidos.flatMap((grupo) => criarFilaAPartirDeGrupo(grupo));
-  distribuirFilaAtrasadaEqualizada(diasDestino, filaRedistribuida, materiasPorDia);
+  distribuirFilaAtrasadaAoLongoDaSemana(
+    diasDestino,
+    filaRedistribuida,
+    materiasPorDia,
+    limiteSegundosIdeal,
+    margemTolerancia,
+    sequenciadorDistribuicao
+  );
 }
 
 function gerarCronogramaLogica(
@@ -681,11 +865,7 @@ function gerarCronogramaLogica(
     const diasDeEstudo = estruturaSeteDias.filter((dia) => dia.tipo === "estudo");
 
     if (diasDeEstudo.length > 0) {
-      if (i === semanaAtualReferencia && backlogSemanaAtual.length > 0) {
-        const filaAtrasados = backlogSemanaAtual.flatMap((grupo) => criarFilaAPartirDeGrupo(grupo));
-        distribuirFilaAtrasadaEqualizada(diasDeEstudo, filaAtrasados, materiasPorDia);
-      }
-
+      const sequenciadorDistribuicao = { valor: 0 };
       const gruposAtuais = extrairGruposAtuais(conteudoSemana, opcoesConteudo);
       const filaAtual = gruposAtuais.flatMap((grupo) => criarFilaAPartirDeGrupo(grupo));
       const limiteSegundosIdealSemana = calcularLimiteIdealDaSemana(
@@ -694,13 +874,26 @@ function gerarCronogramaLogica(
         horasPorDia
       );
 
-      distribuirFilaEmRodizio(
+      distribuirFilaEmSequencia(
         diasDeEstudo,
         filaAtual,
         materiasPorDia,
         limiteSegundosIdealSemana,
-        margemTolerancia
+        margemTolerancia,
+        sequenciadorDistribuicao
       );
+
+      if (i === semanaAtualReferencia && backlogSemanaAtual.length > 0) {
+        const filaAtrasados = backlogSemanaAtual.flatMap((grupo) => criarFilaAPartirDeGrupo(grupo));
+        distribuirFilaAtrasadaAoLongoDaSemana(
+          diasDeEstudo,
+          filaAtrasados,
+          materiasPorDia,
+          limiteSegundosIdealSemana,
+          margemTolerancia,
+          sequenciadorDistribuicao
+        );
+      }
 
       if (i === semanaAtualReferencia && opcoesConteudo.incluirAtrasadosSemanaAtual) {
         const indiceDiaAtual = new Date().getDay() - 1;
@@ -713,7 +906,10 @@ function gerarCronogramaLogica(
           estruturaSeteDias,
           diasDestino,
           indiceNormalizado,
-          materiasPorDia
+          materiasPorDia,
+          limiteSegundosIdealSemana,
+          margemTolerancia,
+          sequenciadorDistribuicao
         );
       }
     }
